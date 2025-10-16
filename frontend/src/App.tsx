@@ -56,7 +56,10 @@ export default function App() {
     if (!canSearch) return
     setError(null)
     try {
-      const params = new URLSearchParams({ q: query })
+      const params = new URLSearchParams()
+      if (query.trim().length > 0) {
+        params.set('q', query)
+      }
       if (entityType) params.set('entity_type', entityType)
       if (albumId) params.set('album_id', albumId)
       if (startDate) params.set('start_date', startDate)
