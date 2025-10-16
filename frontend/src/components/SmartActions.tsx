@@ -68,7 +68,13 @@ function toGCalDateTime(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0')
   const hh = String(d.getHours()).padStart(2, '0')
   const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${y}${m}${day}T${hh}${mm}00Z`
+  // Use local timezone offset instead of Z (UTC)
+  const offset = d.getTimezoneOffset()
+  const offsetHours = Math.floor(Math.abs(offset) / 60)
+  const offsetMinutes = Math.abs(offset) % 60
+  const offsetSign = offset <= 0 ? '+' : '-'
+  const offsetStr = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`
+  return `${y}${m}${day}T${hh}${mm}00${offsetStr}`
 }
 
 

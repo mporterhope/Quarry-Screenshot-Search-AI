@@ -173,6 +173,38 @@ def export_json():
     }
 
 
+@app.post("/ask")
+def ask_question(question: str = Form(...)):
+    try:
+        # Simple RAG: search for relevant images, then generate answer from their text
+        matches = indexer.search(question, k=5)
+        if not matches:
+            return {"answer": "I couldn't find any relevant screenshots to answer your question.", "citations": []}
+        
+        # Combine text from top matches
+        context_texts = [m["text"] for m in matches[:3]]
+        combined_context = " ".join(context_texts)
+        
+        # Simple answer generation (in real implementation, use a local LLM)
+        answer = f"Based on your screenshots, here's what I found: {combined_context[:200]}..."
+        
+        # Create citations
+        citations = [
+            {
+                "image_id": m["id"],
+                "filename": m["filename"],
+                "text_snippet": m["text"][:100] + "..." if len(m["text"]) > 100 else m["text"],
+                "score": m["score"],
+                "image_path": m["image_path"]
+            }
+            for m in matches[:3]
+        ]
+        
+        return {"answer": answer, "citations": citations}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 

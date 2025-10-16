@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -43,7 +44,7 @@ class AlbumStore:
         return None
 
     def create(self, name: str, rule: Dict) -> Album:
-        album = Album(id=f"alb_{len(self.albums):06d}", name=name, rule=rule)
+        album = Album(id=f"alb_{uuid.uuid4().hex[:8]}", name=name, rule=rule)
         self.albums.append(album)
         self.save()
         return album

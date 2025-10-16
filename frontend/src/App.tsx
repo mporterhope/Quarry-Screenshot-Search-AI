@@ -29,8 +29,10 @@ export default function App() {
   const [albumId, setAlbumId] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [askQuestion, setAskQuestion] = useState('')
+  const [askAnswer, setAskAnswer] = useState<{answer: string; citations: Array<{image_id: string; filename: string; text_snippet: string; score: number; image_path: string}>} | null>(null)
 
-  const canSearch = useMemo(() => query.trim().length > 0, [query])
+  const canSearch = useMemo(() => query.trim().length > 0 || albumId.length > 0, [query, albumId])
 
   async function handleUpload() {
     if (files.length === 0) return
@@ -87,6 +89,22 @@ export default function App() {
     if (res.ok) {
       setNewAlbumName('')
       await refreshAlbums()
+    }
+  }
+
+  async function handleAsk(e: React.FormEvent) {
+    e.preventDefault()
+    if (!askQuestion.trim()) return
+    setError(null)
+    try {
+      const form = new FormData()
+      form.set('question', askQuestion)
+      const res = await fetch(`${API_BASE}/ask`, { method: 'POST', body: form })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setAskAnswer(data)
+    } catch (e: any) {
+      setError(String(e.message || e))
     }
   }
 
@@ -153,6 +171,38 @@ export default function App() {
           </>
         )}
       </div>
+
+      <section style={{ marginBottom: 24, padding: 16, border: '1px solid #e5e7eb', borderRadius: 8 }}>
+        <h3>Ask My Screenshots</h3>
+        <form onSubmit={handleAsk} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="What's my booking reference for Bali?"
+            value={askQuestion}
+            onChange={(e) => setAskQuestion(e.target.value)}
+            style={{ flex: 1, padding: 8 }}
+          />
+          <button type="submit" disabled={!askQuestion.trim()}>Ask</button>
+        </form>
+        {askAnswer && (
+          <div style={{ background: '#f9fafb', padding: 12, borderRadius: 6 }}>
+            <p><strong>Answer:</strong> {askAnswer.answer}</p>
+            {askAnswer.citations.length > 0 && (
+              <div>
+                <strong>Sources:</strong>
+                {askAnswer.citations.map((c, i) => (
+                  <div key={i} style={{ marginTop: 8, padding: 8, background: 'white', borderRadius: 4 }}>
+                    <button onClick={() => setDetailId(c.image_id)} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>
+                      {c.filename}
+                    </button>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{c.text_snippet}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       {error && <div style={{ color: 'crimson', marginBottom: 12 }}>{error}</div>}
 
