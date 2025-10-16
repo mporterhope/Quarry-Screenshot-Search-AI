@@ -47,7 +47,11 @@ describe('App search', () => {
     
     // Should call search with album_id
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('album_id=alb_123'))
+      const searchCall = mockFetch.mock.calls.find(([url]) => typeof url === 'string' && url.includes('/search'))
+      expect(searchCall).toBeTruthy()
+      const url = String(searchCall?.[0])
+      expect(url).toContain('album_id=alb_123')
+      expect(url).not.toContain('q=')
     })
   })
 

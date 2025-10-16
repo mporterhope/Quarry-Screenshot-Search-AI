@@ -17,18 +17,17 @@ describe('SmartActions', () => {
   })
 
   it('generates timezone-aware calendar URLs', () => {
-    // Mock Date to control timezone
-    const mockDate = new Date('2025-11-22T15:30:00-05:00') // EST timezone
-    vi.spyOn(global, 'Date').mockImplementation(() => mockDate)
-    
+    // Force timezone offset so generated URL uses local offset instead of Z
+    const offsetSpy = vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-300)
+
     render(<SmartActions entities={{ date: ['22 Nov 2025 3:30 PM'] }} />)
     const calendarLink = screen.getByText(/Add to Calendar/i).closest('a')
-    
+
     // Should contain timezone offset, not Z (UTC)
     expect(calendarLink).toHaveAttribute('href', expect.stringContaining('+05:00'))
     expect(calendarLink).not.toHaveAttribute('href', expect.stringContaining('Z'))
-    
-    vi.restoreAllMocks()
+
+    offsetSpy.mockRestore()
   })
 })
 
